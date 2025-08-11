@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMARTHOME INTERFACE</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: #100f1c;
+            color: #e0e0e0;
+            background-image: url('https://images.unsplash.com/photo-1608178388331-25a293a616b3?q=80&w=1932&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        /* Animation for smoother continuous left-to-right flow */
+        @keyframes flowing-gradient {
+            0%   { background-position: 0% 50%; }
+            100% { background-position: 400% 50%; }
+        }
+
+        /* Red-dominant gradient, without cyan, green, yellow */
+        .hot-gradient {
+            background: linear-gradient(90deg, #ff0000, #ff00ff, #0000ff, #ff00ff, #ff0000);
+            background-size: 400% auto;
+        }
+
+        /* Class for the flowing gradient text effect */
+        .flowing-gradient-text {
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: flowing-gradient 10s linear infinite;
+        }
+        
+        /* Class for the flowing border effect */
+        .flowing-border {
+            border: 2px solid transparent;
+            position: relative;
+            background-color: #11111f; /* Solid dark background */
+            background-clip: padding-box; /* Keeps background inside border */
+        }
+
+        .flowing-border::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: linear-gradient(90deg, #ff0000, #ff00ff, #0000ff, #ff00ff, #ff0000);
+            background-size: 400% auto;
+            border-radius: 1rem; /* Match parent */
+            animation: flowing-gradient 10s linear infinite;
+            z-index: -1;
+        }
+        
+        .data-box {
+            background-color: #1a1a2e; /* Solid dark background for data boxes */
+            border: 1px solid rgba(255, 0, 255, 0.2);
+        }
+
+        /* --- Button Animation --- */
+        @keyframes flowing-button-glow-off {
+            0%   { box-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
+            25%  { box-shadow: 0 0 12px rgba(255, 0, 255, 0.6); }
+            50%  { box-shadow: 0 0 10px rgba(0, 0, 255, 0.5); }
+            75%  { box-shadow: 0 0 12px rgba(255, 0, 255, 0.6); }
+            100% { box-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
+        }
+        
+        @keyframes active-button-pulse {
+            0% { background-position: 0% 50%; box-shadow: 0 0 15px #ff00ff, 0 0 30px #ff0000; }
+            50% { background-position: 100% 50%; box-shadow: 0 0 25px #ff00ff, 0 0 45px #ff0000; }
+            100% { background-position: 0% 50%; box-shadow: 0 0 15px #ff00ff, 0 0 30px #ff0000; }
+        }
+
+        #lamp-toggle-button {
+            /* Default animation for the button when OFF */
+            animation: flowing-button-glow-off 5s linear infinite;
+        }
+
+        .neon-button-active {
+            background: linear-gradient(90deg, #ff0000, #ff00ff, #0000ff, #ff00ff, #ff0000);
+            background-size: 400% 400%;
+            /* Override the default animation with the active one */
+            animation: active-button-pulse 3s ease-in-out infinite;
+        }
+
+        canvas.graph { width: 100%; height: 48px; margin-top: 0.25rem; }
+        
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Main Control Panel -->
+    <div id="main-panel" class="relative w-full max-w-4xl p-2 flowing-border rounded-2xl">
+        <!-- Responsive Layout -->
+        <div class="flex flex-col md:flex-row">
+
+            <!-- Left Column: Main Control -->
+            <div class="w-full md:w-2/5 p-6 flex flex-col items-center justify-center md:border-r-2 border-fuchsia-500/20">
+                 <p class="text-xl uppercase tracking-wider mb-4 flowing-gradient-text hot-gradient font-bold">Light Control</p>
+                 <button id="lamp-toggle-button" class="w-40 h-40 md:w-48 md:h-48 rounded-full flex items-center justify-center text-3xl font-bold text-white uppercase transition-all duration-300 ease-in-out bg-gray-800 border-4 border-gray-700">
+                    OFF
+                </button>
+            </div>
+
+            <!-- Right Column: Data & Status -->
+            <div class="w-full md:w-3/5 p-6 flex flex-col">
+                <!-- Header -->
+                <div class="text-center mb-6">
+                    <h1 class="text-4xl md:text-5xl font-black uppercase tracking-widest flowing-gradient-text hot-gradient">SMARTHOME</h1>
+                    <p class="text-fuchsia-300 text-sm">by: Gemini</p>
+                </div>
+
+                <!-- Sensor Data Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                    <!-- Temperature -->
+                    <div class="data-box rounded-lg p-4">
+                        <p class="text-sm text-gray-400">TEMPERATURE</p>
+                        <p id="temp-value" class="text-3xl font-bold flowing-gradient-text hot-gradient">--.-°C</p>
+                        <canvas id="tempGraph" class="graph"></canvas>
+                    </div>
+                    <!-- Humidity -->
+                    <div class="data-box rounded-lg p-4">
+                        <p class="text-sm text-gray-400">HUMIDITY</p>
+                        <p id="humidity-value" class="text-3xl font-bold flowing-gradient-text hot-gradient">-- %</p>
+                        <canvas id="humidityGraph" class="graph"></canvas>
+                    </div>
+                </div>
+
+                <!-- Status Section -->
+                <div class="space-y-4 mt-auto">
+                    <div class="data-box rounded-lg p-4 flex items-center justify-between">
+                        <p class="text-lg flowing-gradient-text hot-gradient font-bold">LIGHT STATUS</p>
+                        <div class="flex items-center space-x-3">
+                           <div id="top-status-indicator" class="w-6 h-6 rounded-full bg-gray-600 transition-all"></div>
+                           <p id="top-status-text" class="text-xl font-bold text-gray-400">OFF</p>
+                        </div>
+                    </div>
+                    <div class="data-box rounded-lg p-3 text-sm flex justify-between items-center">
+                        <div>
+                            <span>Status: </span>
+                            <span id="bottom-status-text" class="font-bold text-red-500">OFFLINE</span>
+                        </div>
+                        <div>
+                            <span>Firebase: </span>
+                            <span id="firebase-status-text" class="font-bold text-yellow-500">CONNECTING...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- Firebase SDK for Realtime Database ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+        // --- DOM Elements ---
+        const tempValueEl = document.getElementById('temp-value');
+        const humidityValueEl = document.getElementById('humidity-value');
+        const lampButton = document.getElementById('lamp-toggle-button');
+        const topStatusIndicator = document.getElementById('top-status-indicator');
+        const topStatusText = document.getElementById('top-status-text');
+        const bottomStatusText = document.getElementById('bottom-status-text');
+        const firebaseStatusText = document.getElementById('firebase-status-text');
+
+        // --- Sensor Data Simulation ---
+        function updateSensorData() {
+            const temp = (Math.random() * (3.0) + 29.0).toFixed(1);
+            const humidity = Math.floor(Math.random() * (20) + 65);
+            tempValueEl.innerHTML = `${temp}&deg;C`;
+            humidityValueEl.textContent = `${humidity} %`;
+        }
+        setInterval(updateSensorData, 2000);
+        updateSensorData();
+
+        // --- Canvas Graph Logic ---
+        const tempCanvas = document.getElementById('tempGraph');
+        const humidityCanvas = document.getElementById('humidityGraph');
+        const tempCtx = tempCanvas.getContext('2d');
+        const humidityCtx = humidityCanvas.getContext('2d');
+
+        tempCanvas.width = 200; tempCanvas.height = 50;
+        humidityCanvas.width = 200; humidityCanvas.height = 50;
+
+        let tempData = Array(20).fill(0).map(() => Math.random() * 0.5 + 0.25);
+        let humidityData = Array(20).fill(0).map(() => Math.random() * 0.5 + 0.25);
+
+        function updateGraphData() {
+            tempData.shift(); tempData.push(Math.random() * 0.5 + 0.25);
+            humidityData.shift(); humidityData.push(Math.random() * 0.5 + 0.25);
+        }
+        setInterval(updateGraphData, 1000);
+
+        function drawGraph(ctx, data, color, shadowColor) {
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            ctx.strokeStyle = color; ctx.lineWidth = 2;
+            ctx.shadowColor = shadowColor; ctx.shadowBlur = 10;
+            ctx.beginPath();
+            const sliceWidth = ctx.canvas.width / (data.length - 1);
+            for (let i = 0; i < data.length; i++) {
+                const x = i * sliceWidth;
+                const jitter = (Math.random() - 0.5) * 4; 
+                const y = data[i] * ctx.canvas.height + jitter;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        function animateGraphs() {
+            drawGraph(tempCtx, tempData, '#ff4d4d', '#ff4d4d');
+            drawGraph(humidityCtx, humidityData, '#00ffff', '#00ffff');
+            requestAnimationFrame(animateGraphs);
+        }
+        animateGraphs();
+
+        // --- Firebase Logic ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFjjrEQVLsl7kiy7K_wgElSrvJjp59IDk",
+            authDomain: "myhome-2c4f8.firebaseapp.com",
+            databaseURL: "https://myhome-2c4f8-default-rtdb.firebaseio.com",
+            projectId: "myhome-2c4f8",
+            storageBucket: "myhome-2c4f8.appspot.com",
+            messagingSenderId: "319002561044",
+            appId: "1:319002561044:web:182c77370dabf91c93b501",
+            measurementId: "G-FPBC2CGT58"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        const lightRef = ref(db, "Smarthome/L1"); 
+        let isLightOn = false; // Use a boolean for easier logic
+
+        // Listen for changes from Firebase
+        onValue(lightRef, (snapshot) => {
+            const data = snapshot.val();
+            const newIsLightOn = data === "0"; 
+            
+            if (isLightOn !== newIsLightOn) {
+                isLightOn = newIsLightOn;
+                updateLampUI(isLightOn);
+            }
+            firebaseStatusText.textContent = "CONNECTED";
+            firebaseStatusText.style.color = '#22c55e';
+        }, (error) => {
+            console.error("Firebase read error:", error);
+            firebaseStatusText.textContent = "ERROR";
+            firebaseStatusText.style.color = '#ef4444';
+        });
+
+        function updateLampUI(state) {
+            // state is a boolean: true for ON, false for OFF
+            if (state) { // ON
+                lampButton.textContent = "ON";
+                lampButton.classList.add('neon-button-active');
+                lampButton.classList.remove('bg-gray-800', 'border-gray-700');
+                topStatusIndicator.className = 'w-6 h-6 rounded-full bg-fuchsia-500 shadow-[0_0_10px_#ff00ff] transition-all';
+                topStatusText.textContent = "ON";
+                topStatusText.classList.add('flowing-gradient-text', 'hot-gradient');
+                bottomStatusText.textContent = "ONLINE";
+                bottomStatusText.classList.add('flowing-gradient-text', 'hot-gradient');
+                bottomStatusText.classList.remove('text-red-500');
+                bottomStatusText.style.color = ''; 
+            } else { // OFF
+                lampButton.textContent = "OFF";
+                lampButton.classList.remove('neon-button-active');
+                lampButton.classList.add('bg-gray-800', 'border-gray-700');
+                topStatusIndicator.className = 'w-6 h-6 rounded-full bg-gray-600 transition-all';
+                topStatusText.textContent = "OFF";
+                topStatusText.classList.remove('flowing-gradient-text', 'hot-gradient');
+                topStatusText.style.color = '#9ca3af';
+                bottomStatusText.textContent = "OFFLINE";
+                bottomStatusText.classList.remove('flowing-gradient-text', 'hot-gradient');
+                bottomStatusText.classList.add('text-red-500');
+            }
+        }
+
+        // Function to toggle the light
+        async function toggleLight() {
+            const newStateForFirebase = isLightOn ? "1" : "0";
+            try {
+                await set(lightRef, newStateForFirebase);
+            } catch (error) {
+                console.error("Firebase write error:", error);
+                alert("Gagal mengirim perintah ke Firebase. Cek koneksi Anda.");
+            }
+        }
+        
+        lampButton.addEventListener('click', toggleLight);
+
+    </script>
+</body>
+</html>
